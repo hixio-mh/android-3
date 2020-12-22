@@ -28,7 +28,6 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -82,8 +81,8 @@ import java.util.Map;
 import javax.inject.Inject;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.content.res.ResourcesCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -790,39 +789,44 @@ public class SyncedFoldersActivity extends FileActivity implements SyncedFolderA
 
     private void showBatteryOptimizationInfo() {
         if (powerManagementService.isPowerSavingExclusionAvailable() || checkIfBatteryOptimizationEnabled()) {
-            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this, R.style.Theme_ownCloud_Dialog)
-                .setTitle(getString(R.string.battery_optimization_title))
-                .setMessage(getString(R.string.battery_optimization_message))
-                .setPositiveButton(getString(R.string.battery_optimization_disable), (dialog, which) -> {
-                    // show instant upload
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        @SuppressLint("BatteryLife")
-                        Intent intent = new Intent(ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                                                   Uri.parse("package:" + BuildConfig.APPLICATION_ID));
+            showBatteryOptimizationInfoDialog();
+        }
+    }
 
-                        if (intent.resolveActivity(getPackageManager()) != null) {
-                            startActivity(intent);
-                        }
-                    } else {
-                        Intent powerUsageIntent = new Intent(Intent.ACTION_POWER_USAGE_SUMMARY);
-                        if (getPackageManager().resolveActivity(powerUsageIntent, 0) != null) {
-                            startActivity(powerUsageIntent);
-                        } else {
-                            dialog.dismiss();
-                            DisplayUtils.showSnackMessage(this, getString(R.string.battery_optimization_no_setting));
-                        }
+    @VisibleForTesting
+    public void showBatteryOptimizationInfoDialog() {
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this, R.style.Theme_ownCloud_Dialog)
+            .setTitle(getString(R.string.battery_optimization_title))
+            .setMessage(getString(R.string.battery_optimization_message))
+            .setPositiveButton(getString(R.string.battery_optimization_disable), (dialog, which) -> {
+                // show instant upload
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    @SuppressLint("BatteryLife")
+                    Intent intent = new Intent(ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                                               Uri.parse("package:" + BuildConfig.APPLICATION_ID));
+
+                    if (intent.resolveActivity(getPackageManager()) != null) {
+                        startActivity(intent);
                     }
-                })
-                .setNegativeButton(getString(R.string.battery_optimization_close), (dialog, which) -> dialog.dismiss())
-                .setIcon(R.drawable.ic_battery_alert);
+                } else {
+                    Intent powerUsageIntent = new Intent(Intent.ACTION_POWER_USAGE_SUMMARY);
+                    if (getPackageManager().resolveActivity(powerUsageIntent, 0) != null) {
+                        startActivity(powerUsageIntent);
+                    } else {
+                        dialog.dismiss();
+                        DisplayUtils.showSnackMessage(this, getString(R.string.battery_optimization_no_setting));
+                    }
+                }
+            })
+            .setNegativeButton(getString(R.string.battery_optimization_close), (dialog, which) -> dialog.dismiss())
+            .setIcon(R.drawable.ic_battery_alert);
 
-            if (getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.RESUMED)) {
-                AlertDialog alertDialog = alertDialogBuilder.show();
+        if (getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.RESUMED)) {
+            AlertDialog alertDialog = alertDialogBuilder.show();
 
-                int color = ThemeUtils.primaryAccentColor(this);
-                alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(color);
-                alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(color);
-            }
+            int color = ThemeUtils.primaryAccentColor(this);
+            alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(color);
+            alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(color);
         }
     }
 

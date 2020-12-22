@@ -25,6 +25,7 @@ package com.nextcloud.client;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.view.View;
 
 import com.owncloud.android.AbstractIT;
 import com.owncloud.android.datamodel.MediaFolderType;
@@ -90,5 +91,17 @@ public class SyncedFoldersActivityIT extends AbstractIT {
         shortSleep();
 
         screenshot(Objects.requireNonNull(sut.requireDialog().getWindow()).getDecorView());
+    }
+
+    @Test
+    @ScreenshotTest
+    public void testBatteryOptimizationInfoDialog() {
+        SyncedFoldersActivity sut = activityRule.launchActivity(null);
+        getInstrumentation().waitForIdleSync();
+        shortSleep();
+
+        sut.runOnUiThread(sut::showBatteryOptimizationInfoDialog);
+
+        screenshot(sut);
     }
 }
